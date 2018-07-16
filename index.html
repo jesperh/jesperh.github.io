@@ -1,0 +1,333 @@
+<html>
+	<head>
+		<title>3d Kyykkäkenttä - Akateemisen Kyykän MM-kilpailut</title>
+		<style>
+		</style>
+	</head>
+	<body>
+		<script src="http://threejs.org/build/three.min.js"></script>
+		<script src="http://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="http://threejs.org/examples/js/Detector.js"></script>
+		<div id="container"></div>
+		<script>
+			
+			// This was supposed to be just a learning experience messing around with three.js.
+			// However, the outcome was pretty nice and was proven to be useful when training
+			// referees for the kyykka champioships.
+			// The code isn't good, but it suffices. The referee's won't see it ;)
+			// TODO: someday refactor this with TypeScript...
+
+			if (!Detector.webgl) {
+				Detector.addGetWebGLMessage();
+			}
+			var container;
+			var camera, controls, scene, renderer;
+
+			init();
+			render();	
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 5000 );
+				camera.position.z = 1800;
+				camera.position.y = 170;
+
+				controls = new THREE.OrbitControls( camera );
+				controls.damping = 0.2;
+				controls.addEventListener( 'change', render );
+
+				scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0xdaecf2, 0.000002 );		
+
+				// settings
+				var kenttaWidth = 500;
+				var kenttaLength = 2000;
+				var kyykkaLineWidth = 500;
+				var kyykkaRadius = 3.7;
+				var kyykkaDiameter = 2*kyykkaRadius;
+				var kyykkaHeight = 10;
+
+				var kyykkaRelativeDistanceCenterToCenter = kyykkaLineWidth / 20;
+				var kyykkaRelativeDistanceEdges = kyykkaRelativeDistanceCenterToCenter - 2*kyykkaRadius;
+
+				var kyykkaGeo = new THREE.CylinderGeometry( kyykkaRadius, kyykkaRadius, kyykkaHeight, 32 );
+				var kyykkaMaterial = new THREE.MeshLambertMaterial( {color: 0xA0522D, shading: THREE.SmoothShading} );
+
+				var startPos = 240;
+
+				for ( var i = 0; i < 20; i ++ ) {
+					// in real life, the kyykkas are never perfectly on top
+					// of each other. Add some random offset to how kyykkas are
+					// positioned so they appear more realistic
+					var plusOrMinus = Math.random() < 0.5 ? -1 : 1;
+					var randomOffset = Math.random()*plusOrMinus;
+					var randomOffset2 = Math.random()*plusOrMinus;			
+					
+					// lower line of kyykkas
+					var kyykka = new THREE.Mesh( kyykkaGeo, kyykkaMaterial );
+					kyykka.position.x = (i*kyykkaRelativeDistanceCenterToCenter) -startPos;
+					kyykka.position.y = 0;
+					kyykka.position.z = 500;
+					kyykka.updateMatrix();
+					kyykka.matrixAutoUpdate = false;
+					scene.add( kyykka );	
+
+					// kyykkas above kyykkas
+					kyykka2 = new THREE.Mesh( kyykkaGeo, kyykkaMaterial );
+					kyykka2.position.x = ((i*kyykkaRelativeDistanceCenterToCenter) -startPos)+randomOffset;
+					kyykka2.position.y = kyykkaHeight;
+					kyykka2.position.z = 500+randomOffset2;
+					kyykka2.updateMatrix();
+					kyykka2.matrixAutoUpdate = false;
+					scene.add( kyykka2 );
+
+					// the other end of the court
+					// lower line
+					kyykka3 = new THREE.Mesh( kyykkaGeo, kyykkaMaterial );
+					kyykka3.position.x = (i*kyykkaRelativeDistanceCenterToCenter) -startPos;
+					kyykka3.position.y = 0;
+					kyykka3.position.z = 1500;
+					kyykka3.updateMatrix();
+					kyykka3.matrixAutoUpdate = false;
+					scene.add( kyykka3 );	
+
+					// kyykkas above
+					kyykka4 = new THREE.Mesh( kyykkaGeo, kyykkaMaterial );
+					kyykka4.position.x = ((i*kyykkaRelativeDistanceCenterToCenter) -startPos)+randomOffset;
+					kyykka4.position.y = kyykkaHeight;
+					kyykka4.position.z = 1500+randomOffset2;
+					kyykka4.updateMatrix();
+					kyykka4.matrixAutoUpdate = false;
+					scene.add( kyykka4 );
+				}
+
+			    var courtMaterial = new THREE.LineBasicMaterial({
+			        color: 0xff2b2b
+			    });
+
+
+			    // draw the court borders
+			    var outerBorder = new THREE.Geometry();
+			    outerBorder.vertices.push(new THREE.Vector3(250, -5, 0));
+			    outerBorder.vertices.push(new THREE.Vector3(-250, -5, 0));
+			    outerBorder.vertices.push(new THREE.Vector3(-250, -5, kenttaLength));
+			    outerBorder.vertices.push(new THREE.Vector3(250, -5, kenttaLength));
+			    outerBorder.vertices.push(new THREE.Vector3(250, -5, 0));
+
+			    var outerBorderLine = new THREE.Line(outerBorder, courtMaterial);
+			    scene.add(outerBorderLine);
+
+			    var mensThrowLine = new THREE.Geometry();
+			    mensThrowLine.vertices.push(new THREE.Vector3(250, -5, 500));
+			    mensThrowLine.vertices.push(new THREE.Vector3(-250, -5, 500));
+			    mensThrowLine.vertices.push(new THREE.Vector3(-250, -5, 1500));
+			    mensThrowLine.vertices.push(new THREE.Vector3(250, -5, 1500));
+			    mensThrowLine.vertices.push(new THREE.Vector3(250, -5, 0));
+
+			    var mensThrowLineBorder = new THREE.Line(mensThrowLine, courtMaterial);
+			    scene.add(mensThrowLineBorder);
+
+			    var womensThrowLine = new THREE.Geometry();
+			    womensThrowLine.vertices.push(new THREE.Vector3(250, -5, 700));
+			    womensThrowLine.vertices.push(new THREE.Vector3(-250, -5, 700));
+			    womensThrowLine.vertices.push(new THREE.Vector3(-250, -5, 1300));
+			    womensThrowLine.vertices.push(new THREE.Vector3(250, -5, 1300));
+			    womensThrowLine.vertices.push(new THREE.Vector3(250, -5, 0));
+
+			    var womemensThrowLineBorder = new THREE.Line(womensThrowLine, courtMaterial);
+			    scene.add(womemensThrowLineBorder);			    
+
+				// snow texture for ground				
+				var groundTexture = THREE.ImageUtils.loadTexture('./img/lumi.jpg', undefined, function(){render()});
+				var ground = new THREE.Mesh( new THREE.PlaneBufferGeometry(6000, 5000, 0, 0),new THREE.MeshBasicMaterial({
+					map:groundTexture
+					})
+				);
+				ground.position.set(0, -10, 0);
+				ground.rotation.x = -Math.PI / 2;
+				this.scene.add(ground);
+
+				// TEA-club logo
+				var teaLogo = THREE.ImageUtils.loadTexture('./img/tea.jpg', undefined, function(){render()});
+				var teaLogoGeo = new THREE.Mesh( new THREE.PlaneBufferGeometry(300, 300, 0, 0), new THREE.MeshBasicMaterial({map:teaLogo, transparency:true, opacity:0.5}) );
+				teaLogoGeo.position.set(0, 10, 1000);
+				teaLogoGeo.rotation.x = -Math.PI / 2;
+				this.scene.add(teaLogoGeo);
+
+				// KEISARI logo
+				var keisariLogo = THREE.ImageUtils.loadTexture('./img/keisari.jpg', undefined, function(){render()});
+				var keisariLogoGeo = new THREE.Mesh( new THREE.PlaneBufferGeometry(300, 100, 0, 0), new THREE.MeshBasicMaterial({map:keisariLogo}) );
+				keisariLogoGeo.position.set(-395, 160, 1050);
+				keisariLogoGeo.rotation.y = Math.PI / 2 ;
+				this.scene.add(keisariLogoGeo);		
+
+				// we need two of these, this other one is a mirror image placed
+				// behind the first one. This makes the logo look like two sided.
+				var keisariLogoGeo2 = new THREE.Mesh( new THREE.PlaneBufferGeometry(300, 100, 0, 0), new THREE.MeshBasicMaterial({map:keisariLogo}) );
+				keisariLogoGeo2.position.set(-405, 160, 1050);
+				keisariLogoGeo2.rotation.y = -Math.PI / 2 ;
+				this.scene.add(keisariLogoGeo2);					
+
+				var pilarMaterial = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+				var pilar1Geo = new THREE.BoxGeometry( 10, 400, 10 );			
+				
+				var pilar1 = new THREE.Mesh( pilar1Geo, kyykkaMaterial );
+				pilar1.position.set(-400, 10, 895);
+				scene.add( pilar1 );		
+
+				var pilar2 = new THREE.Mesh( pilar1Geo, kyykkaMaterial );
+				pilar2.position.set(-400, 10, 1200);
+				scene.add( pilar2 );
+			
+				var canvas1 = document.createElement('canvas');
+				var context1 = canvas1.getContext('2d');
+				context1.font = "Bold 40px Arial";
+				context1.fillStyle = "rgba(255,0,0,0.95)";
+			    context1.fillText('- 5m -', 0, 50);
+			    
+				// canvas contents will be used for a texture
+				var textTexture = new THREE.Texture(canvas1) 
+				textTexture.needsUpdate = true;
+
+			    var textMaterial = new THREE.MeshBasicMaterial( {map: textTexture, side:THREE.DoubleSide } );
+   				textMaterial.transparent = true;
+		
+			    var rearBoundary = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas1.width, canvas1.height),
+			        textMaterial
+			      );
+
+				rearBoundary.position.set(100,-10,0);
+				scene.add( rearBoundary );
+
+			    var rearBoundary2 = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas1.width, canvas1.height),
+			        textMaterial
+			      );
+
+				rearBoundary2.position.set(100,-10,2000);
+				scene.add( rearBoundary2 );				
+
+			    var throwingSquare = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas1.width, canvas1.height),
+			        textMaterial
+			      );
+			    
+				throwingSquare.position.set(-250,-10,200);
+				throwingSquare.rotation.y = Math.PI / 2;
+				scene.add( throwingSquare );
+
+			    var throwingSquare2 = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas1.width, canvas1.height),
+			        textMaterial
+			      );
+			    
+				throwingSquare2.position.set(-250,-10,1700);
+				throwingSquare2.rotation.y = Math.PI / 2;
+				scene.add( throwingSquare2 );				
+
+				var canvas2 = document.createElement('canvas');				
+				var context2 = canvas2.getContext('2d');
+				context2.font = "Bold 40px Arial";
+				context2.fillStyle = "rgba(255,0,0,0.95)";
+			    context2.fillText('- 2m -', 0, 50);
+
+				var textTexture2m = new THREE.Texture(canvas2) 
+				textTexture2m.needsUpdate = true;
+
+			    var textMaterial2m = new THREE.MeshBasicMaterial( {map: textTexture2m, side:THREE.DoubleSide } );
+   				textMaterial2m.transparent = true;			    
+
+			    var womensThrowingSquare = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas2.width, canvas2.height),
+			        textMaterial2m
+			      );
+			    
+				womensThrowingSquare.position.set(-250,-10,520);
+				womensThrowingSquare.rotation.y = Math.PI / 2;
+				scene.add( womensThrowingSquare );
+
+			    var womensThrowingSquare2 = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas2.width, canvas2.height),
+			        textMaterial2m
+			      );
+			    
+				womensThrowingSquare2.position.set(-250,-10,1300);
+				womensThrowingSquare2.rotation.y = Math.PI / 2;
+				scene.add( womensThrowingSquare2 );				
+
+
+				var canvas3 = document.createElement('canvas');
+				
+				var context3 = canvas3.getContext('2d');
+				context3.font = "Bold 40px Arial";
+				context3.fillStyle = "rgba(255,0,0,0.95)";
+			    context3.fillText('- 6m -', 0, 50);
+
+				var textTexture8m = new THREE.Texture(canvas3) 
+				textTexture8m.needsUpdate = true;
+
+			    var textMaterial8m = new THREE.MeshBasicMaterial( {map: textTexture8m, side:THREE.DoubleSide } );
+   				textMaterial8m.transparent = true;			    
+
+			    var centerSquare = new THREE.Mesh(
+			        new THREE.PlaneGeometry(canvas3.width, canvas3.height),
+			        textMaterial8m
+			      );
+			    
+				centerSquare.position.set(-250,-10,920);
+				centerSquare.rotation.y = Math.PI / 2;
+				scene.add( centerSquare );				
+
+
+				// lights
+				light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 1, 1, 1 );
+				scene.add( light );
+
+				light = new THREE.DirectionalLight( 0x002288 );
+				light.position.set( -1, -1, -1 );
+				scene.add( light );
+
+				light = new THREE.AmbientLight( 0x222222 );
+				scene.add( light );
+
+
+				// renderer
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer.setClearColor( scene.fog.color );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
+				window.addEventListener( 'resize', onWindowResize, false );		
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				render();
+			}
+
+			function render() {
+				// prevent camera from going underground (thug life = bad life 8-( )
+				if ( camera.position.y < 0 ) {
+					camera.position.y = 0;
+				}
+				// prevent camera from going too up
+				if ( camera.position.y > 1000 ) {
+					camera.position.y = 1000;
+				}				
+				// prevent camera from going too far
+				if ( camera.position.z > 3000 ) {
+					camera.position.z = 3000;
+				}
+
+				renderer.render( scene, camera );				
+			}
+		</script>
+	</body>
+</html>
