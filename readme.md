@@ -1,5 +1,5 @@
 <h1>3D Kyykkä Court</h1>
-<h3>Demo: </h3>
+<h3><a target="_blank" href="https://jesperh.github.io/">Demo here </a></h3>
 <p>	This was supposed to be just a learning experience messing around with three.js.
 However, the outcome was pretty nice and was proven to be useful when training
 referees for the kyykka champioships.</p>
